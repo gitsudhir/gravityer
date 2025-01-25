@@ -2,25 +2,22 @@ import React, { useReducer, useEffect } from "react";
 import "./todo.css";
 import TodoList from "./todo-list";
 import AddTodo from "./add-todo";
-import { todoReducer } from './reducer';
+import FilterButton from "./filter-button";
+import { todoReducer } from "./reducer";
 // Initial state for the reducer
 const initialState = {
   todos: JSON.parse(localStorage.getItem("todos")) || [],
-  newTodo: "",
   loading: true,
   error: null,
 };
 
-
-
 function TodoApp() {
   const [state, dispatch] = useReducer(todoReducer, initialState);
-  const { todos, newTodo, loading, error } = state;
+  const { todos, loading, error } = state;
 
   // Fetch todos from the API
   useEffect(() => {
     async function fetchTodos() {
-      console.log("here => fetch");
       dispatch({ type: "FETCH_TODOS_REQUEST" });
       try {
         const response = await fetch("https://dummyjson.com/todos");
@@ -30,7 +27,6 @@ function TodoApp() {
         dispatch({ type: "FETCH_TODOS_FAILURE", error: error.message });
       }
     }
-    console.log("dfd", todos.length);
     if (!todos.length) {
       // Fetch only if local storage is empty
       fetchTodos();
@@ -43,7 +39,7 @@ function TodoApp() {
   }, [todos.length]);
 
   // Handle adding a new todo
-  const handleAddTodo = () => {
+  const handleAddTodo = (newTodo) => {
     if (newTodo.trim()) {
       const newTodoObj = { id: Date.now(), todo: newTodo };
       dispatch({ type: "ADD_TODO", payload: newTodoObj });
@@ -55,11 +51,14 @@ function TodoApp() {
     dispatch({ type: "DELETE_TODO", id });
   };
 
-  // Handle change in input field
-  const handleChange = (e) => {
-    dispatch({ type: "SET_NEW_TODO", payload: e.target.value });
+  const handleChange = (id, newCompletedValue) => {
+    const updateTodoObj = { id, newCompletedValue };
+    dispatch({ type: "UPDATE_TODO", payload: updateTodoObj });
   };
-
+  // Handle filter a todo
+  const handleFilter = (isDone) => {
+    dispatch({ type: "FILTER_TODO", isDone });
+  };
   if (loading) {
     return <div>⭕Loading...</div>;
   }
@@ -71,14 +70,36 @@ function TodoApp() {
   return (
     <div className="App">
       <h1>Todo App</h1>
-      <input
-        type="text"
-        value={newTodo}
-        onChange={handleChange}
-        placeholder="Add a new task"
-      />
+
       <AddTodo handleAddTodo={handleAddTodo} />
-      <TodoList todos={todos} handleDeleteTodo={handleDeleteTodo} />
+      <hr />
+      <FilterButton
+        isDone={true}
+        isActive={todos.every((v) => v.completed === true)}
+        value={"Completed"}
+        handleFilter={handleFilter}
+      />
+      <FilterButton
+        isDone={false}
+        isActive={todos.every((v) => v.completed === false)}
+        value={"Pending"}
+        handleFilter={handleFilter}
+      />
+      <FilterButton
+        isDone={null}
+        isActive={
+          todos.some((v) => v.completed === true) &&
+          todos.some((v) => v.completed === false)
+        }
+        value={"All"}
+        handleFilter={handleFilter}
+      />
+      <hr />
+      <TodoList
+        todos={todos}
+        handleDeleteTodo={handleDeleteTodo}
+        onChange={handleChange}
+      />
     </div>
   );
 }

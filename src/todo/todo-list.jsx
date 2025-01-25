@@ -1,9 +1,9 @@
 import TodoItem from "./todo-item";
-function TodoList({ todos, handleDeleteTodo }) {
+function TodoList({ todos, handleDeleteTodo ,onChange}) {
   return (
     <ul>
       {todos.map((todo) => (
-        <TodoItem todo={todo} handleDeleteTodo={handleDeleteTodo} />
+        <TodoItem key={todo.id} todo={todo} handleDeleteTodo={handleDeleteTodo} onChange={onChange} />
       ))}
     </ul>
   );
